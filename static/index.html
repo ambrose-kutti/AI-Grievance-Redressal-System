@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Grievance System</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --bg-input: #0f172a;
+            --bg-hover: #252f47;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #7dd3fc;
+            --accent-glow: rgba(56, 189, 248, 0.2);
+            --border: #334155;
+            --success: #22c55e;
+            --success-bg: #064e3b;
+            --success-border: #22c55e;
+            --error-bg: #450a0a;
+            --error-border: #ef4444;
+            --warning: #f59e0b;
+            --shadow: rgba(0,0,0,0.3);
+            --modal-overlay: rgba(0,0,0,0.8);
+            --mic-active: #ef4444;
+            --mic-pulse: rgba(239, 68, 68, 0.3);
+        }
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #f1f5f9;
+            --bg-hover: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --accent: #0284c7;
+            --accent-hover: #0369a1;
+            --accent-glow: rgba(2, 132, 199, 0.15);
+            --border: #cbd5e1;
+            --success: #16a34a;
+            --success-bg: #dcfce7;
+            --success-border: #22c55e;
+            --error-bg: #fee2e2;
+            --error-border: #ef4444;
+            --warning: #d97706;
+            --shadow: rgba(0,0,0,0.08);
+            --modal-overlay: rgba(0,0,0,0.5);
+            --mic-active: #dc2626;
+            --mic-pulse: rgba(220, 38, 38, 0.2);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+        .navbar { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; transition: background 0.3s, border 0.3s; }
+        .navbar-brand { color: var(--accent); font-size: 22px; font-weight: 800; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a { color: var(--text-secondary); text-decoration: none; font-weight: 600; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); background: var(--bg-input); }
+        .theme-toggle { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+        .theme-toggle:hover { border-color: var(--accent); }
+        .container { max-width: 1000px; margin: 0 auto; padding: 30px 40px 40px; }
+        .page-header { margin-bottom: 30px; }
+        .page-header h1 { color: var(--text-primary); font-size: 32px; margin-bottom: 8px; font-weight: 800; }
+        .page-header p { color: var(--text-secondary); font-size: 16px; }
+        .card { background: var(--bg-card); border-radius: 16px; padding: 28px; margin-bottom: 24px; border: 1px solid var(--border); box-shadow: 0 4px 12px var(--shadow); transition: all 0.3s; }
+        .card:hover { box-shadow: 0 8px 24px var(--shadow); }
+        .card-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        label { display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 600; font-size: 14px; }
+        .input-group { margin-bottom: 20px; }
+        input, textarea, select { width: 100%; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; color: var(--text-primary); font-size: 15px; transition: all 0.2s; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
+        select { appearance: auto; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
+        .voice-section { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 20px; background: var(--bg-input); border-radius: 12px; border: 2px dashed var(--border); transition: all 0.3s; }
+        .voice-section.active { border-color: var(--mic-active); background: var(--mic-pulse); }
+        .mic-btn { 
+            width: 64px; height: 64px; border-radius: 50%; border: none; 
+            background: var(--accent); color: white; font-size: 28px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s; box-shadow: 0 4px 12px var(--accent-glow);
+            position: relative;
+        }
+        .mic-btn:hover { transform: scale(1.05); background: var(--accent-hover); }
+        .mic-btn.recording { background: var(--mic-active); animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 var(--mic-pulse); }
+            70% { box-shadow: 0 0 0 20px transparent; }
+            100% { box-shadow: 0 0 0 0 transparent; }
+        }
+        .voice-status { flex: 1; }
+        .voice-status h4 { color: var(--text-primary); margin-bottom: 4px; }
+        .voice-status p { color: var(--text-secondary); font-size: 14px; }
+        .voice-transcript { margin-top: 12px; padding: 12px; background: var(--bg-card); border-radius: 8px; font-size: 14px; color: var(--text-secondary); min-height: 40px; border: 1px solid var(--border); }
+        .voice-transcript.has-text { color: var(--text-primary); }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; border: none; transition: all 0.2s; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 4px 12px var(--accent-glow); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-danger { background: var(--error-border); color: white; }
+        .file-upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; background: var(--bg-input); transition: all 0.3s; cursor: pointer; }
+        .file-upload-area:hover { border-color: var(--accent); background: var(--accent-glow); }
+        .file-upload-area.has-file { border-color: var(--success); background: var(--success-bg); }
+        .file-upload-area .icon { font-size: 36px; margin-bottom: 10px; }
+        .file-name { font-weight: 600; color: var(--accent); margin-top: 8px; }
+        .spinner { display: none; border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .email-preview { display: none; }
+        .email-preview.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .email-header { background: var(--bg-input); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .email-field { display: flex; align-items: center; margin-bottom: 12px; gap: 12px; }
+        .email-field:last-child { margin-bottom: 0; }
+        .email-field label { min-width: 80px; margin-bottom: 0; font-size: 13px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .email-field input { flex: 1; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 14px; }
+        .email-field input:focus { outline: none; border-color: var(--accent); }
+        .email-field .badge-inline { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .email-body-editor { width: 100%; min-height: 300px; padding: 20px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; color: var(--text-primary); font-size: 15px; line-height: 1.7; resize: vertical; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .email-body-editor:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        .extracted-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .info-chip { background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+        .info-chip .label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .info-chip .value { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+        .info-chip .value.empty { color: var(--text-secondary); font-style: italic; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .badge-electric { background: #f59e0b; color: #0f172a; }
+        .badge-water { background: #3b82f6; color: white; }
+        .badge-gas { background: #ef4444; color: white; }
+        .badge-roads { background: #6b7280; color: white; }
+        .badge-sanitation { background: #8b5cf6; color: white; }
+        .badge-healthcare { background: #ec4899; color: white; }
+        .badge-general { background: #64748b; color: white; }
+        .badge-high { background: #dc2626; color: white; }
+        .badge-medium { background: #f59e0b; color: #0f172a; }
+        .badge-low { background: #22c55e; color: #0f172a; }
+        .badge-critical { background: #7f1d1d; color: white; border: 1px solid #dc2626; }
+        .action-bar { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+        .action-bar .btn { flex: 1; min-width: 160px; justify-content: center; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: var(--modal-overlay); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 48px var(--shadow); animation: modalIn 0.3s ease; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-header { padding: 28px 28px 20px; text-align: center; border-bottom: 1px solid var(--border); }
+        .modal-header .success-icon { width: 72px; height: 72px; background: var(--success-bg); border: 2px solid var(--success-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 16px; }
+        .modal-header h2 { color: var(--text-primary); font-size: 24px; margin-bottom: 8px; }
+        .modal-header p { color: var(--text-secondary); }
+        .modal-body { padding: 24px 28px; }
+        .detail-card { background: var(--bg-input); border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
+        .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { color: var(--text-secondary); font-size: 14px; }
+        .detail-value { color: var(--text-primary); font-weight: 700; font-size: 14px; }
+        .modal-footer { padding: 20px 28px 28px; display: flex; gap: 12px; }
+        .modal-footer .btn { flex: 1; justify-content: center; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; box-shadow: 0 8px 24px var(--shadow); display: flex; align-items: center; gap: 12px; animation: toastIn 0.3s ease; min-width: 300px; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--error-border); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+        .hidden { display: none !important; }
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            .navbar { padding: 12px 20px; }
+            .nav-links { gap: 12px; }
+            .nav-links a { padding: 6px 10px; font-size: 14px; }
+            .page-header h1 { font-size: 24px; }
+            .action-bar .btn { flex: 1 1 100%; }
+            .extracted-info { grid-template-columns: 1fr; }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">&#127919; AI Grievance System</a>
+        <div class="nav-links">
+            <a href="/" class="active">Submit Grievance</a>
+            <a href="/dashboard" onclick="event.preventDefault(); window.location.href='/dashboard';">Department Dashboard</a>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">&#127769; Dark</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Submit Your Grievance</h1>
+            <p>Register, then speak or type your complaint. Our AI will format it into a professional email and route it to the correct department.</p>
+        </div>
+        <!-- Registration Card -->
+        <div class="card" id="registrationCard">
+            <div class="card-title">&#128100; User Registration</div>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;">
+                Register with your details before submitting a grievance. 
+                <strong>Or use voice registration below!</strong>
+            </p>
+            <!-- Voice Registration Button & Chat UI -->
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-primary" id="voiceRegBtn" onclick="toggleVoiceRegistration()" style="width: 100%; justify-content: center;">
+                    <span id="voiceRegBtnText">Start Voice Registration</span>
+                    <div class="spinner" id="voiceRegSpinner"></div>
+                </button>
+                <!-- Chat Conversation Display -->
+                <div id="chatContainer" style="
+                    display: none;
+                    margin-top: 16px;
+                    background: var(--bg-input);
+                    border-radius: 12px;
+                    padding: 16px;
+                    max-height: 300px;
+                    overflow-y: auto;
+                    border: 1px solid var(--border);
+                ">
+                    <div id="chatMessages">
+                    <!-- Messages will appear here -->
+                    </div>
+                    <div id="chatStatus" style="
+                        font-size: 13px;
+                        color: var(--text-secondary);
+                        margin-top: 8px;
+                        text-align: center;
+                    "></div>
+                </div>
+                <!-- Recording indicator -->
+                <div id="voiceRegRecording" style="display: none; margin-top: 12px; text-align: center;">
+                    <span style="color: var(--mic-active); font-weight: 600;">Recording... Speak clearly</span>
+                     <br>
+                    <button onclick="forceProcessVoice()" style="
+                        margin-top: 8px;
+                        padding: 8px 16px;
+                        background: var(--success);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        font-size: 14px;
+                    ">Submit Answer</button>
+                </div>
+            </div>
+            <div style="text-align: center; color: var(--text-secondary); margin: 12px 0; font-size: 13px;">
+                ─── OR fill the form manually ───
+            </div>
+            <div class="form-row">
+                <div class="input-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="regName" placeholder="Enter your full name" required>
+                </div>
+                <div class="input-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="regPhone" placeholder="Enter your phone number" required>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Address *</label>
+                <input type="text" id="regAddress" placeholder="Enter your complete address" required>
+            </div>
+            <div class="form-row">
+                <div class="input-group">
+                    <label>Pin Code *</label>
+                    <input type="text" id="regPincode" placeholder="Enter pin code" required>
+                </div>
+                <div class="input-group">
+                    <label>Government ID Type *</label>
+                    <select id="regGovtIdType" required>
+                        <option value="">Select ID Type</option>
+                        <option value="Aadhar">Aadhar Card</option>
+                        <option value="PAN">PAN Card</option>
+                        <option value="Voter ID">Voter ID</option>
+                        <option value="Driving License">Driving License</option>
+                        <option value="Passport">Passport</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Government ID Number *</label>
+                <input type="text" id="regGovtIdNumber" placeholder="Enter your ID number" required>
+            </div>
+            <!-- Review & Confirm Section -->
+            <div id="reviewSection" style="display: none; margin-top: 20px; padding: 16px; background: var(--bg-input); border-radius: 12px; border: 2px solid var(--success-border);">
+                <h4 style="color: var(--success); margin-bottom: 12px;">Please review your details:</h4>
+                <div id="reviewDetails" style="font-size: 14px; line-height: 1.8;"></div>
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <button class="btn btn-secondary" onclick="cancelReview()" style="flex: 1;">Edit</button>
+                    <button class="btn btn-success" onclick="confirmVoiceRegistration()" style="flex: 2;">Confirm & Register</button>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="registerBtn" onclick="registerUser()" style="margin-top: 16px;">
+                <span>Register & Continue</span>
+                <div class="spinner" id="registerSpinner"></div>
+            </button>
+        </div>
+        <div class="card hidden" id="inputCard">
+            <div class="card-title"> Describe your Complaint</div>
+            <div class="voice-section" id="voiceSection">
+                <button class="mic-btn" id="micBtn" onclick="toggleVoiceInput()" title="Click to speak">
+                    &#127908;
+                </button>
+                <div class="voice-status">
+                    <div>
+                        <h4>Voice Input</h4>
+                        <p id="voiceHint">Click the microphone and speak (Real-time transcription)</p>
+                    </div>
+                    <div class="voice-transcript" id="voiceTranscript">Your speech will appear here...</div>
+                    <div id="detectedLanguage" style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;"></div>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Or type your complaint details</label>
+                <textarea id="complaintText" placeholder="Example: My name is John Doe, I want to report that the water supply in Sector 7 has been disrupted for 3 days..."></textarea>
+            </div>
+            <div class="input-group">
+                <label>Attach Supporting Document (Optional)</label>
+                <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click()">
+                    <div class="icon">&#128206;</div>
+                    <div>Click to upload PDF, Image, or Text file</div>
+                    <div class="file-name" id="fileName"></div>
+                </div>
+                <input type="file" id="fileInput" style="display: none;" accept=".txt,.pdf,.png,.jpg,.jpeg,.gif,.bmp,.tiff,.webp" onchange="handleFileSelect(event)">
+            </div>
+            <button class="btn btn-primary" id="generateBtn" onclick="generateTemplate()">
+                <span> Generate Email Template</span>
+                <div class="spinner" id="generateSpinner"></div>
+            </button>
+        </div>
+        <div class="card email-preview" id="previewCard">
+            <div class="card-title">Preview & Edit Email</div>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;">Review the generated email. You can edit any field before submitting.</p>
+            <div class="extracted-info" id="extractedInfo"></div>
+            <div class="email-header">
+                <div class="email-field">
+                    <label>From</label>
+                    <input type="text" id="emailFrom" value="grievance-system@demo.local" readonly style="opacity: 0.7;">
+                </div>
+                <div class="email-field">
+                    <label>To</label>
+                    <input type="text" id="emailTo" readonly>
+                    <span class="badge-inline" id="deptBadge">General</span>
+                </div>
+                <div class="email-field">
+                    <label>Subject</label>
+                    <input type="text" id="emailSubject">
+                </div>
+                <div class="email-field">
+                    <label>Priority</label>
+                    <span class="badge-inline" id="priorityBadge">Medium</span>
+                </div>
+            </div>
+            <label>Email Body</label>
+            <textarea class="email-body-editor" id="emailBody"></textarea>
+            <div class="action-bar">
+                <button class="btn btn-secondary" onclick="backToInput()">
+                    Back
+                </button>
+                <button class="btn btn-primary" id="submitBtn" onclick="submitGrievance()">
+                    <span> Submit to Department</span>
+                    <div class="spinner" id="submitSpinner"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="confirmModal" onclick="closeSuccessModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header" style="position: relative;">
+                <button onclick="closeSuccessModal()" style="
+                    position: absolute;
+                    top: 16px;
+                    right: 20px;
+                    background: none;
+                    border: none;
+                    color: var(--text-secondary);
+                    font-size: 24px;
+                    cursor: pointer;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='var(--bg-hover)'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='transparent'; this.style.color='var(--text-secondary)'">
+                    &times;
+                </button>
+                <div class="success-icon">&#9989;</div>
+                <h2>Grievance Submitted!</h2>
+                <p>Your complaint has been successfully routed</p>
+            </div>
+            <div class="modal-body">
+                <div class="detail-card">
+                    <div class="detail-row">
+                        <span class="detail-label">Grievance ID</span>
+                        <span class="detail-value" id="modalGrievanceId">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Routed To</span>
+                        <span class="detail-value" id="modalDepartment">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Department Email</span>
+                        <span class="detail-value" id="modalEmail">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Priority</span>
+                        <span class="detail-value" id="modalPriority">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Submitted At</span>
+                        <span class="detail-value" id="modalTime">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="submitAnother()">
+                    Submit Another
+                </button>
+                <button class="btn btn-primary" onclick="downloadEmail()">
+                    Download Email
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        let currentUserId = null;
+        let currentGrievanceId = null;
+        let currentTemplate = null;
+        let currentFile = null;
+        let currentFilePath = null;
+        let voiceTranscript = "";
+        let userDetails = {};
+        // TEXT TO SPEECH (Bot Speaks) 
+        function speakText(text, callback) {
+            if (!window.speechSynthesis) {
+                if (callback) callback();
+                return;
+            }
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-IN';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            const voices = window.speechSynthesis.getVoices();
+            const indianVoice = voices.find(v => v.lang === 'en-IN');
+            if (indianVoice) {
+                utterance.voice = indianVoice;
+            }
+            if (callback) {
+                utterance.onend = callback;
+                utterance.onerror = callback;
+            }
+            window.speechSynthesis.speak(utterance);
+        }
+        if (window.speechSynthesis) {
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
+        function initTheme() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            updateBtn(saved);
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'toastIn 0.3s ease reverse forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateBtn(next);
+        }
+
+        function updateBtn(theme) {
+            document.getElementById('themeBtn').textContent = theme === 'light' ? 'Dark' : 'Light';
+        }
+        initTheme();
+
+        async function registerUser() {
+            const name = document.getElementById('regName')?.value.trim() || '';
+            const phone = document.getElementById('regPhone')?.value.trim() || '';
+            const address = document.getElementById('regAddress')?.value.trim() || '';
+            const pincode = document.getElementById('regPincode')?.value.trim() || '';
+            const govt_id_type = document.getElementById('regGovtIdType')?.value || '';
+            const govt_id_number = document.getElementById('regGovtIdNumber')?.value.trim() || '';
+            if (!name || !phone || !address || !pincode || !govt_id_type || !govt_id_number) {
+                showToast("Please fill all registration fields", "warning");
+                return;
+            }
+            if (!/^\d{10}$/.test(phone)) {
+                showToast("Please enter a valid 10-digit phone number", "warning");
+                return;
+            }
+            if (!/^\d{6}$/.test(pincode)) {
+                showToast("Please enter a valid 6-digit pin code", "warning");
+                return;
+            }
+            const btn = document.getElementById('registerBtn');
+            const spinner = document.getElementById('registerSpinner');
+            btn.disabled = true;
+            spinner.style.display = "inline-block";
+            try {
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('phone', phone);
+                formData.append('address', address);
+                formData.append('pincode', pincode);
+                formData.append('govt_id_type', govt_id_type);
+                formData.append('govt_id_number', govt_id_number);
+                const res = await fetch('/api/register-user', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                currentUserId = data.user_id; 
+                userDetails = { name, phone, address, pincode, govt_id_type, govt_id_number };
+                document.getElementById('registrationCard').classList.add('hidden');
+                document.getElementById('inputCard').classList.remove('hidden');
+                showToast(`Registered successfully! Welcome ${data.name}`, "success");
+            } catch (err) {
+                showToast("Error: " + err.message, "error");
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                spinner.style.display = "none";
+            }
+        }
+
+        // VOICE REGISTRATION - FULLY CONVERSATIONAL
+        let isVoiceRegActive = false;
+        let voiceRegStep = 0;
+        let collectedData = {};
+        let regMediaRecorder = null;
+        let regAudioChunks = [];
+        let isRegRecording = false;
+        let isProcessing = false;
+        let silenceCheckInterval = null;
+
+        const REG_QUESTIONS = [
+            { field: 'name', prompt: 'What is your full name?', example: 'Example: John Doe' },
+            { field: 'phone', prompt: 'What is your phone number?', example: 'Example: 9876543210' },
+            { field: 'address', prompt: 'What is your complete address?', example: 'Example: 123 Main Street, Mumbai' },
+            { field: 'pincode', prompt: 'What is your pin code?', example: 'Example: 417519' },
+            { field: 'govt_id_type', prompt: 'What is your government ID type?', example: 'Aadhar, PAN, Voter ID, etc.' },
+            { field: 'govt_id_number', prompt: 'What is your government ID number?', example: 'Example: 1234-5678-9012' },
+        ];
+
+        function toggleVoiceRegistration() {
+            if (isVoiceRegActive) {
+                stopVoiceRegistration();
+                return;
+            }
+            startVoiceRegistration();
+        }
+
+        function forceProcessVoice() {
+            if (regAudioChunks.length > 0 && isRegRecording) {
+                console.log("Force processing voice...");
+                stopRegRecording();
+            } else {
+                showToast("No audio recorded yet. Please speak first.", "warning");
+            }
+        }
+
+        function startVoiceRegistration() {
+            console.log("Starting voice registration...");
+            isVoiceRegActive = true;
+            voiceRegStep = 0;
+            collectedData = {};
+            isProcessing = false;
+            document.getElementById('voiceRegBtnText').textContent = 'Stop Registration';
+            document.getElementById('voiceRegBtn').classList.add('btn-danger');
+            document.getElementById('voiceRegBtn').classList.remove('btn-primary');
+            document.getElementById('chatContainer').style.display = 'block';
+            document.getElementById('chatMessages').innerHTML = '';
+            document.getElementById('reviewSection').style.display = 'none';
+            addChatMessage('bot', 'Welcome! I\'ll help you register. I\'ll ask you 6 questions. Just speak your answers naturally.');
+            speakText('Welcome! I will help you register. I will ask you 6 questions. Just speak your answers naturally.', () => {
+                setTimeout(() => askNextQuestion(), 500);
+            });
+        }
+
+        function stopVoiceRegistration() {
+            console.log("Stopping voice registration...");
+            isVoiceRegActive = false;
+            if (regMediaRecorder && isRegRecording) {
+                regMediaRecorder.stop();
+            }
+            if (silenceCheckInterval) {
+                clearInterval(silenceCheckInterval);
+                silenceCheckInterval = null;
+            }
+            document.getElementById('voiceRegBtnText').textContent = 'Start Voice Registration';
+            document.getElementById('voiceRegBtn').classList.remove('btn-danger');
+            document.getElementById('voiceRegBtn').classList.add('btn-primary');
+            document.getElementById('chatContainer').style.display = 'none';
+            document.getElementById('voiceRegRecording').style.display = 'none';
+            isRegRecording = false;
+            isProcessing = false;
+        }
+
+        function askNextQuestion() {
+            console.log(`Asking question ${voiceRegStep + 1} of ${REG_QUESTIONS.length}`);
+            
+            if (voiceRegStep >= REG_QUESTIONS.length) {
+                showReviewScreen();
+                return;
+            }
+            if (!isVoiceRegActive) return;
+            const q = REG_QUESTIONS[voiceRegStep];
+            
+            let promptText = q.prompt;
+            let exampleText = q.example;
+
+            if (q.field === 'govt_id_type') {
+                promptText = 'What is your government ID type? You can speak it or select it from the dropdown.';
+                exampleText = 'Select Aadhar, PAN, Voter ID, Driving License, or Passport';
+            } else if (q.field === 'govt_id_number') {
+                const selectedType = collectedData.govt_id_type || document.getElementById('regGovtIdType').value || 'government ID';
+                promptText = `What is your ${selectedType} number?`;
+                exampleText = `Example: Enter your ${selectedType} number`;
+            }
+
+            addChatMessage('bot', `${promptText} ${exampleText ? '<br><small style="color: var(--text-secondary);">' + exampleText + '</small>' : ''}`);
+            document.getElementById('chatStatus').textContent = 'Listening... Speak your answer';
+            document.getElementById('voiceRegRecording').style.display = 'block';
+            speakText(promptText, () => {
+                console.log("Bot finished speaking, starting recording...");
+                setTimeout(() => startRegRecording(), 1000);
+            });
+        }
+
+        function addChatMessage(sender, text) {
+            const container = document.getElementById('chatMessages');
+            const msg = document.createElement('div');
+            msg.style.cssText = `
+                margin-bottom: 10px;
+                padding: 10px 14px;
+                border-radius: 12px;
+                max-width: 90%;
+                animation: fadeIn 0.3s ease;
+                ${sender === 'bot' ? `
+                    background: var(--bg-card);
+                    border: 1px solid var(--border);
+                    align-self: flex-start;
+                ` : `
+                    background: var(--accent);
+                    color: white;
+                    align-self: flex-end;
+                    margin-left: auto;
+                `}
+            `;
+            msg.innerHTML = text;
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function startRegRecording() {
+            console.log("Starting recording...");
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 16000,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    }
+                });
+                regMediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm;codecs=opus'
+                });
+                regAudioChunks = [];
+                let lastChunkTime = Date.now();
+                let totalAudioSize = 0;
+
+                regMediaRecorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        regAudioChunks.push(event.data);
+                        totalAudioSize += event.data.size;
+                        lastChunkTime = Date.now();
+                    }
+                };
+
+                regMediaRecorder.onstop = function() {
+                    console.log(`Recording stopped. Total audio: ${totalAudioSize} bytes, Chunks: ${regAudioChunks.length}`);
+                    if (isVoiceRegActive && !isProcessing && regAudioChunks.length > 0) {
+                        isProcessing = true;
+                        processRegAnswer();
+                    } else {
+                        console.log("Recording stopped but nothing to process");
+                        isProcessing = false;
+                        if (isVoiceRegActive) {
+                            setTimeout(() => askNextQuestion(), 500);
+                        }
+                    }
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                // Start recording with 100ms intervals
+                regMediaRecorder.start(100);
+                isRegRecording = true;
+                document.getElementById('voiceRegRecording').style.display = 'block';
+                document.getElementById('chatStatus').textContent = 'Recording... Speak now (say your answer)';
+                
+                // Auto-stop after 10 seconds maximum
+                let maxRecordingTime = 10000;
+                setTimeout(() => {
+                    if (isRegRecording && !isProcessing) {
+                        console.log(`Max recording time (${maxRecordingTime}ms) reached, stopping...`);
+                        stopRegRecording();
+                    }
+                }, maxRecordingTime);
+
+                // Silence detection - 2.5 seconds of silence
+                if (silenceCheckInterval) {
+                    clearInterval(silenceCheckInterval);
+                    silenceCheckInterval = null;
+                }
+                silenceCheckInterval = setInterval(() => {
+                    if (!isRegRecording || isProcessing || !isVoiceRegActive) {
+                        return;
+                    }
+                    if (analyser && dataArray) {
+                        analyser.getByteFrequencyData(dataArray);
+                        let sum = 0;
+                        for (let i = 0; i < dataArray.length; i++) {
+                            sum += dataArray[i];
+                        }
+                        let avgVolume = sum / dataArray.length;
+
+                        // Volume threshold > 4 indicates speech/sound input
+                        if (avgVolume > 4) {
+                            if (!speechDetected) console.log("Speech detected! Volume:", avgVolume);
+                            speechDetected = true;
+                            lastSpeechTime = Date.now();
+                        } else if (speechDetected && (Date.now() - lastSpeechTime > 2000)) {
+                            // User spoke and then stayed silent for 2 seconds -> Finish!
+                            console.log("Silence after speech detected, stopping recording...");
+                            clearInterval(silenceCheckInterval);
+                            silenceCheckInterval = null;
+                            clearTimeout(maxTimer);
+                            if (isRegRecording && !isProcessing) {
+                                stopRegRecording();
+                            }
+                        }
+                    }
+                }, 200);
+
+            } catch (err) {
+                console.error("Microphone error:", err);
+                showToast("Microphone access denied. Please type manually.", "error");
+                isVoiceRegActive = false;
+                stopVoiceRegistration();
+            }
+        }
+
+        function stopRegRecording() {
+            console.log("stopRegRecording called");
+            if (regMediaRecorder && isRegRecording) {
+                isRegRecording = false;
+                if (silenceCheckInterval) {
+                    clearInterval(silenceCheckInterval);
+                    silenceCheckInterval = null;
+                }
+                document.getElementById('voiceRegRecording').style.display = 'none';
+                document.getElementById('chatStatus').textContent = 'Processing your answer...';
+                regMediaRecorder.stop();
+            }
+        }
+
+        function processRegAnswer() {
+            console.log("Processing registration answer...");
+            if (regAudioChunks.length === 0) {
+                console.log(" No audio chunks found");
+                addChatMessage('bot', 'I didn\'t hear anything. Let me ask again.');
+                speakText('I didn\'t hear anything. Let me ask again.', () => {
+                    isProcessing = false;
+                    setTimeout(() => askNextQuestion(), 1000);
+                });
+                return;
+            }
+            try {
+                const audioBlob = new Blob(regAudioChunks, { type: 'audio/webm' });
+                console.log(`Audio blob size: ${audioBlob.size} bytes`);
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm');
+                formData.append('language', 'auto');
+                formData.append('step', voiceRegStep);
+                formData.append('collected_data', JSON.stringify(collectedData));
+                console.log(` Sending to /api/voice-register, step: ${voiceRegStep}`);
+                fetch('/api/voice-register', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    console.log(`Response status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(`Response data:`, data);
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    if (data.validation_error) {
+                        addChatMessage('bot', data.validation_error);
+                        speakText(data.validation_error, () => {
+                            isProcessing = false;
+                            setTimeout(() => askNextQuestion(), 1000);
+                        });
+                        return;
+                    }
+                    const field = REG_QUESTIONS[voiceRegStep].field;
+                    const extractedValue = data.extracted_value || data.transcript || '';
+                    console.log(`Extracted ${field}: ${extractedValue}`);
+                    if (extractedValue.trim()) {
+                        collectedData[field] = extractedValue.trim();
+                        const fieldIdMap = {
+                            name: 'regName',
+                            phone: 'regPhone',
+                            address: 'regAddress',
+                            pincode: 'regPincode',
+                            govt_id_type: 'regGovtIdType',
+                            govt_id_number: 'regGovtIdNumber'
+                        };
+                        const fieldId = fieldIdMap[field];
+                        const inputElement = document.getElementById(fieldId);
+                        if (inputElement.tagName === 'SELECT') {
+                            let found = false;
+                            for (let i = 0; i < inputElement.options.length; i++) {
+                                const optVal = inputElement.options[i].value.toLowerCase();
+                                const optText = inputElement.options[i].text.toLowerCase();
+                                const extVal = extractedValue.toLowerCase();
+                                if (optVal && (optVal.includes(extVal) || extVal.includes(optVal) || optText.includes(extVal) || extVal.includes(optText))) {
+                                    inputElement.selectedIndex = i;
+                                    collectedData[field] = inputElement.options[i].value;
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                inputElement.value = extractedValue;
+                                collectedData[field] = extractedValue;
+                            }
+                        } else {
+                            inputElement.value = extractedValue;
+                        }
+                        addChatMessage('user', `${collectedData[field]}`);
+                        addChatMessage('bot', `Got it! Moving to next question...`);
+                        speakText('Got it! Moving to next question.', () => {
+                            voiceRegStep++;
+                            isProcessing = false;
+                            setTimeout(() => askNextQuestion(), 500);
+                        });
+                    } else {
+                        addChatMessage('bot', `I didn't catch that. Please speak your answer clearly or type it into the field.`);
+                        speakText('I didn\'t catch that. Please speak your answer clearly or type it into the field.', () => {
+                            isProcessing = false;
+                            setTimeout(() => askNextQuestion(), 1000);
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error("Fetch error:", err);
+                    addChatMessage('bot', 'I didn\'t hear any speech. Please speak your answer or type it in the form.');
+                    speakText('I didn\'t hear any speech. Please speak your answer or type it in the form.', () => {
+                        isProcessing = false;
+                        setTimeout(() => askNextQuestion(), 1000);
+                    });
+                });
+            } catch (err) {
+                console.error(" processRegAnswer error:", err);
+                addChatMessage('bot', 'Sorry, I had trouble processing. Let\'s try again.');
+                speakText('Sorry, I had trouble processing. Let\'s try again.', () => {
+                    isProcessing = false;
+                    setTimeout(() => askNextQuestion(), 1000);
+                });
+            }
+        }
+
+        function showReviewScreen() {
+            console.log(" Showing review screen...");
+            document.getElementById('voiceRegRecording').style.display = 'none';
+            document.getElementById('chatStatus').textContent = ' Registration complete! Review your details below.';
+            isVoiceRegActive = false;
+            document.getElementById('voiceRegBtnText').textContent = ' Start Voice Registration';
+            document.getElementById('voiceRegBtn').classList.remove('btn-danger');
+            document.getElementById('voiceRegBtn').classList.add('btn-primary');
+            addChatMessage('bot', ' Great! Here are all your details. Please review and confirm.');
+            speakText('Great! Here are all your details. Please review and confirm.');
+            const reviewDiv = document.getElementById('reviewDetails');
+            reviewDiv.innerHTML = `
+                <div><strong>Name:</strong> ${collectedData.name || 'Not provided'}</div>
+                <div><strong>Phone:</strong> ${collectedData.phone || 'Not provided'}</div>
+                <div><strong>Address:</strong> ${collectedData.address || 'Not provided'}</div>
+                <div><strong>Pin Code:</strong> ${collectedData.pincode || 'Not provided'}</div>
+                <div><strong>Govt ID Type:</strong> ${collectedData.govt_id_type || 'Not provided'}</div>
+                <div><strong>Govt ID Number:</strong> ${collectedData.govt_id_number || 'Not provided'}</div>
+            `;
+            document.getElementById('reviewSection').style.display = 'block';
+            document.getElementById('registerBtn').style.display = 'none';
+        }
+
+        function cancelReview() {
+            document.getElementById('reviewSection').style.display = 'none';
+            document.getElementById('registerBtn').style.display = 'block';
+            document.getElementById('chatContainer').style.display = 'none';
+            document.getElementById('voiceRegBtnText').textContent = 'Start Voice Registration';
+            document.getElementById('voiceRegBtn').classList.remove('btn-danger');
+            document.getElementById('voiceRegBtn').classList.add('btn-primary');
+            isVoiceRegActive = false;
+        }
+
+        function confirmVoiceRegistration() {
+            document.getElementById('regName').value = collectedData.name || '';
+            document.getElementById('regPhone').value = collectedData.phone || '';
+            document.getElementById('regAddress').value = collectedData.address || '';
+            document.getElementById('regPincode').value = collectedData.pincode || '';
+            document.getElementById('regGovtIdType').value = collectedData.govt_id_type || '';
+            document.getElementById('regGovtIdNumber').value = collectedData.govt_id_number || '';
+            document.getElementById('reviewSection').style.display = 'none';
+            document.getElementById('registerBtn').style.display = 'block';
+            document.getElementById('chatContainer').style.display = 'none';
+            document.getElementById('voiceRegBtnText').textContent = 'Start Voice Registration';
+            document.getElementById('voiceRegBtn').classList.remove('btn-danger');
+            document.getElementById('voiceRegBtn').classList.add('btn-primary');
+            isVoiceRegActive = false;
+            showToast("Registration form filled! Click Register to continue.", "success");
+            document.getElementById('registerBtn').click();
+        }
+
+        // Allow manual selection of Government ID type during Voice Registration
+        document.getElementById('regGovtIdType')?.addEventListener('change', function() {
+            if (isVoiceRegActive && REG_QUESTIONS[voiceRegStep] && REG_QUESTIONS[voiceRegStep].field === 'govt_id_type') {
+                const val = this.value;
+                if (!val) return;
+                collectedData['govt_id_type'] = val;
+                addChatMessage('user', `Selected: ${val}`);
+                addChatMessage('bot', `Got it! Selected ${val}. Moving to next question...`);
+                speakText(`Got it! Selected ${val}. Moving to next question.`, () => {
+                    voiceRegStep++;
+                    isProcessing = false;
+                    setTimeout(() => askNextQuestion(), 500);
+                });
+            }
+        });
+
+        // FILE HANDLING 
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                currentFile = file;
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileUploadArea').classList.add('has-file');
+            }
+        }
+
+        // VOICE INPUT FOR COMPLAINT 
+        let isVoiceInputActive = false;
+        let voiceMediaRecorder = null;
+        let voiceAudioChunks = [];
+
+        async function toggleVoiceInput() {
+            if (isVoiceInputActive) {
+                stopVoiceInput();
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: { channelCount: 1, sampleRate: 16000, echoCancellation: true, noiseSuppression: true }
+                });
+                voiceMediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+                voiceAudioChunks = [];
+
+                voiceMediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) voiceAudioChunks.push(e.data);
+                };
+
+                voiceMediaRecorder.onstop = async () => {
+                    stream.getTracks().forEach(t => t.stop());
+                    if (voiceAudioChunks.length === 0) return;
+
+                    const blob = new Blob(voiceAudioChunks, { type: 'audio/webm' });
+                    const formData = new FormData();
+                    formData.append('audio', blob, 'recording.webm');
+                    formData.append('language', 'auto');
+
+                    document.getElementById('voiceHint').textContent = 'Transcribing...';
+                    try {
+                        const res = await fetch('/api/transcribe-audio', { method: 'POST', body: formData });
+                        const data = await res.json();
+                        if (data.transcript) {
+                            voiceTranscript = data.transcript;
+                            document.getElementById('voiceTranscript').textContent = data.transcript;
+                            document.getElementById('voiceTranscript').classList.add('has-text');
+                            document.getElementById('complaintText').value = data.transcript;
+                            if (data.detected_language) {
+                                document.getElementById('detectedLanguage').textContent = 'Detected: ' + data.detected_language;
+                            }
+                        } else {
+                            showToast(data.error || 'Transcription failed', 'error');
+                        }
+                    } catch (err) {
+                        showToast('Transcription error: ' + err.message, 'error');
+                    }
+                    document.getElementById('voiceHint').textContent = 'Click the microphone and speak (Real-time transcription)';
+                };
+
+                voiceMediaRecorder.start(100);
+                isVoiceInputActive = true;
+                document.getElementById('micBtn').classList.add('recording');
+                document.getElementById('voiceSection').classList.add('active');
+                document.getElementById('voiceHint').textContent = 'Recording... Click again to stop';
+
+                // Auto-stop after 30 seconds
+                setTimeout(() => {
+                    if (isVoiceInputActive) stopVoiceInput();
+                }, 30000);
+
+            } catch (err) {
+                showToast('Microphone access denied', 'error');
+            }
+        }
+
+        function stopVoiceInput() {
+            isVoiceInputActive = false;
+            if (voiceMediaRecorder && voiceMediaRecorder.state !== 'inactive') {
+                voiceMediaRecorder.stop();
+            }
+            document.getElementById('micBtn').classList.remove('recording');
+            document.getElementById('voiceSection').classList.remove('active');
+            document.getElementById('voiceHint').textContent = 'Click the microphone and speak (Real-time transcription)';
+        }
+
+        //GENERATE EMAIL TEMPLATE
+        async function generateTemplate() {
+            const complaint = document.getElementById('complaintText').value.trim();
+            if (!complaint && !voiceTranscript) {
+                showToast('Please enter or speak your complaint first', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('generateBtn');
+            const spinner = document.getElementById('generateSpinner');
+            btn.disabled = true;
+            spinner.style.display = 'inline-block';
+
+            try {
+                const formData = new FormData();
+                formData.append('user_id', currentUserId);
+                formData.append('complaint_text', complaint || voiceTranscript);
+                if (voiceTranscript) formData.append('voice_transcript', voiceTranscript);
+                if (currentFile) formData.append('file', currentFile);
+
+                const res = await fetch('/api/generate-template', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                currentGrievanceId = data.grievance_id;
+                currentTemplate = data.template;
+                currentFilePath = data.file_path;
+
+                // Fill email preview
+                document.getElementById('emailTo').value = data.department_email;
+                document.getElementById('emailFrom').value = data.sender_email;
+                document.getElementById('emailSubject').value = data.template.subject;
+                document.getElementById('emailBody').value = data.template.body;
+
+                const dept = data.template.department;
+                const deptBadge = document.getElementById('deptBadge');
+                deptBadge.textContent = dept;
+                deptBadge.className = 'badge-inline badge-' + dept.toLowerCase();
+
+                const priority = data.template.priority;
+                const priorityBadge = document.getElementById('priorityBadge');
+                priorityBadge.textContent = priority;
+                priorityBadge.className = 'badge-inline badge-' + priority.toLowerCase();
+
+                // Show extracted info
+                const extracted = data.template.extracted || {};
+                const extractedDiv = document.getElementById('extractedInfo');
+                extractedDiv.innerHTML = '';
+                const fields = [
+                    { label: 'Sender', value: extracted.sender_name },
+                    { label: 'Contact', value: extracted.contact_info },
+                    { label: 'Location', value: extracted.location },
+                    { label: 'Issue Type', value: extracted.issue_type },
+                    { label: 'Department', value: dept },
+                    { label: 'Confidence', value: data.template.confidence ? (data.template.confidence * 100).toFixed(0) + '%' : 'N/A' }
+                ];
+                fields.forEach(f => {
+                    const chip = document.createElement('div');
+                    chip.className = 'info-chip';
+                    chip.innerHTML = `<div class="label">${f.label}</div><div class="value ${f.value ? '' : 'empty'}">${f.value || 'Not detected'}</div>`;
+                    extractedDiv.appendChild(chip);
+                });
+
+                // Show preview, hide input
+                document.getElementById('inputCard').classList.add('hidden');
+                document.getElementById('previewCard').classList.add('active');
+
+                showToast('Email template generated!', 'success');
+
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        }
+
+        //SUBMIT GRIEVANCE 
+        async function submitGrievance() {
+            const btn = document.getElementById('submitBtn');
+            const spinner = document.getElementById('submitSpinner');
+            btn.disabled = true;
+            spinner.style.display = 'inline-block';
+
+            try {
+                const formData = new FormData();
+                formData.append('grievance_id', currentGrievanceId);
+                formData.append('user_id', currentUserId);
+                formData.append('email_subject', document.getElementById('emailSubject').value);
+                formData.append('email_body', document.getElementById('emailBody').value);
+                formData.append('department', currentTemplate.department);
+                formData.append('priority', currentTemplate.priority);
+                formData.append('summary', currentTemplate.summary);
+                formData.append('complaint_text', document.getElementById('complaintText').value || voiceTranscript);
+                formData.append('extracted_text', JSON.stringify(currentTemplate.extracted || {}));
+                formData.append('email_to', document.getElementById('emailTo').value);
+                if (currentFilePath) formData.append('file_path', currentFilePath);
+                if (voiceTranscript) formData.append('voice_transcript', voiceTranscript);
+
+                const res = await fetch('/api/send-grievance', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                // Show success modal
+                document.getElementById('modalGrievanceId').textContent = data.grievance_id;
+                document.getElementById('modalDepartment').textContent = data.department;
+                document.getElementById('modalEmail').textContent = data.email_to;
+                document.getElementById('modalPriority').textContent = data.priority;
+                document.getElementById('modalTime').textContent = new Date(data.submitted_at).toLocaleString();
+                document.getElementById('confirmModal').classList.add('active');
+
+                showToast('Grievance submitted successfully!', 'success');
+
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        }
+
+        //NAVIGATION & UTILITY 
+        function backToInput() {
+            document.getElementById('previewCard').classList.remove('active');
+            document.getElementById('inputCard').classList.remove('hidden');
+        }
+
+        function closeSuccessModal(event) {
+            if (!event || event.target === document.getElementById('confirmModal')) {
+                document.getElementById('confirmModal').classList.remove('active');
+                resetToRegistration();
+            }
+        }
+
+        function submitAnother() {
+            document.getElementById('confirmModal').classList.remove('active');
+            document.getElementById('previewCard').classList.remove('active');
+            document.getElementById('inputCard').classList.remove('hidden');
+            document.getElementById('complaintText').value = '';
+            document.getElementById('voiceTranscript').textContent = 'Your speech will appear here...';
+            document.getElementById('voiceTranscript').classList.remove('has-text');
+            document.getElementById('detectedLanguage').textContent = '';
+            document.getElementById('fileName').textContent = '';
+            document.getElementById('fileUploadArea').classList.remove('has-file');
+            document.getElementById('fileInput').value = '';
+            currentFile = null;
+            currentFilePath = null;
+            voiceTranscript = '';
+            currentTemplate = null;
+            currentGrievanceId = null;
+        }
+
+        function downloadEmail() {
+            if (currentGrievanceId) {
+                window.open('/api/download-email/' + currentGrievanceId, '_blank');
+            }
+        }
+
+        function resetToRegistration() {
+        // Reset complaint form
+        document.getElementById('complaintText').value = '';
+        document.getElementById('voiceTranscript').textContent = 'Your speech will appear here...';
+        document.getElementById('voiceTranscript').classList.remove('has-text');
+        document.getElementById('detectedLanguage').textContent = '';
+        document.getElementById('fileName').textContent = '';
+        document.getElementById('fileUploadArea').classList.remove('has-file');
+        document.getElementById('fileInput').value = '';
+        // Reset variables
+        voiceTranscript = '';
+        currentFile = null;
+        currentFilePath = null;
+        currentGrievanceId = null;
+        currentTemplate = null;
+        // Hide preview, show registration
+        document.getElementById('previewCard').classList.remove('active');
+        document.getElementById('inputCard').style.display = 'none';
+        document.getElementById('inputCard').classList.add('hidden');
+        document.getElementById('registrationCard').classList.remove('hidden');
+        document.getElementById('registrationCard').style.display = 'block';
+        // Clear registration fields
+        document.getElementById('regName').value = '';
+        document.getElementById('regPhone').value = '';
+        document.getElementById('regAddress').value = '';
+        document.getElementById('regPincode').value = '';
+        document.getElementById('regGovtIdType').value = '';
+        document.getElementById('regGovtIdNumber').value = '';
+        // Reset register button
+        const registerBtn = document.getElementById('registerBtn');
+        registerBtn.disabled = false;
+        registerBtn.innerHTML = '<span>Register & Continue</span><div class="spinner" id="registerSpinner"></div>';
+        document.getElementById('registerSpinner').style.display = 'none';
+        currentUserId = null;
+        userDetails = {};
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToast("Back to Registration", "success");
+    }
+    </script>
+</body>
+</html>

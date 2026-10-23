@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Dashboard | AI Grievance System</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --bg-input: #0f172a;
+            --bg-hover: #252f47;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #7dd3fc;
+            --border: #334155;
+            --success: #22c55e;
+            --shadow: rgba(0,0,0,0.3);
+            --modal-overlay: rgba(0,0,0,0.7);
+        }
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #f1f5f9;
+            --bg-hover: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --accent: #0284c7;
+            --accent-hover: #0369a1;
+            --border: #cbd5e1;
+            --success: #16a34a;
+            --shadow: rgba(0,0,0,0.08);
+            --modal-overlay: rgba(0,0,0,0.4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+        .navbar { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; transition: background 0.3s, border 0.3s; }
+        .navbar-brand { color: var(--accent); font-size: 22px; font-weight: 800; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a { color: var(--text-secondary); text-decoration: none; font-weight: 600; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent); background: var(--bg-input); }
+        .theme-toggle { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
+        .theme-toggle:hover { border-color: var(--accent); }
+        .container { max-width: 1300px; margin: 0 auto; padding: 30px 40px; }
+        .page-header { margin-bottom: 24px; }
+        .page-header h1 { color: var(--text-primary); font-size: 28px; margin-bottom: 6px; font-weight: 800; }
+        .page-header p { color: var(--text-secondary); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 30px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; transition: transform 0.2s, background 0.3s, border 0.3s; }
+        .stat-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+        .stat-number { font-size: 32px; font-weight: 800; color: var(--accent); }
+        .stat-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card.total { border-color: var(--accent); }
+        .stat-card.total .stat-number { color: var(--text-primary); }
+        .filters { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .filters label { color: var(--text-primary); font-weight: 600; font-size: 14px; }
+        .filters select { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; transition: background 0.3s, border 0.3s, color 0.3s; }
+        .filters select:focus { outline: none; border-color: var(--accent); }
+        .refresh-btn { background: var(--success); color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; margin-left: auto; transition: opacity 0.2s; }
+        .refresh-btn:hover { opacity: 0.9; }
+        .table-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: background 0.3s, border 0.3s; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--bg-input); transition: background 0.3s; }
+        th { padding: 14px 16px; text-align: left; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+        td { padding: 14px 16px; font-size: 14px; color: var(--text-primary); border-bottom: 1px solid var(--border); }
+        tbody tr:hover { background: var(--bg-hover); }
+        tbody tr:last-child td { border-bottom: none; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .badge-electric { background: #f59e0b; color: #0f172a; }
+        .badge-water { background: #3b82f6; color: white; }
+        .badge-gas { background: #ef4444; color: white; }
+        .badge-roads { background: #6b7280; color: white; }
+        .badge-sanitation { background: #8b5cf6; color: white; }
+        .badge-healthcare { background: #ec4899; color: white; }
+        .badge-general { background: #64748b; color: white; }
+        .badge-high { background: #dc2626; color: white; }
+        .badge-medium { background: #f59e0b; color: #0f172a; }
+        .badge-low { background: #22c55e; color: #0f172a; }
+        .badge-critical { background: #7f1d1d; color: white; border: 1px solid #dc2626; }
+        .badge-submitted { background: var(--success); color: white; }
+        .badge-routed { background: #3b82f6; color: white; }
+        .summary-cell { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .email-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--accent); }
+        .view-btn { background: var(--accent); color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .view-btn:hover { background: var(--accent-hover); }
+        .download-btn { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.2s; }
+        .download-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+        .user-cell { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+        @media (max-width: 768px) { .container { padding: 20px; } .stats-grid { grid-template-columns: repeat(2, 1fr); } th, td { padding: 10px 12px; font-size: 12px; } .summary-cell { max-width: 120px; } }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: var(--modal-overlay); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px var(--shadow); animation: modalIn 0.25s ease; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { color: var(--text-primary); font-size: 20px; }
+        .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; padding: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+        .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .modal-body { padding: 24px; }
+        .detail-row { margin-bottom: 18px; }
+        .detail-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .detail-value { font-size: 15px; color: var(--text-primary); line-height: 1.5; background: var(--bg-input); padding: 12px; border-radius: 8px; border: 1px solid var(--border); white-space: pre-wrap; }
+        .file-preview-box { border: 1px solid var(--border); border-radius: 8px; background: var(--bg-input); max-height: 400px; overflow: auto; margin-top: 8px; }
+        .file-preview-box img { max-width: 100%; display: block; margin: 0 auto; }
+        .file-preview-box iframe { width: 100%; height: 500px; border: none; display: block; }
+        .file-preview-box pre { padding: 16px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; word-break: break-word; margin: 0; }
+        .file-preview-box::-webkit-scrollbar { width: 8px; height: 8px; }
+        .file-preview-box::-webkit-scrollbar-track { background: var(--bg-card); border-radius: 4px; }
+        .file-preview-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .file-meta { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-card); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+        .download-link { color: var(--accent); text-decoration: none; font-weight: 700; }
+        .download-link:hover { text-decoration: underline; }
+        .no-file { color: var(--text-secondary); font-style: italic; padding: 20px; text-align: center; }
+        .email-preview-box { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 8px; font-family: 'Georgia', serif; line-height: 1.7; white-space: pre-wrap; }
+        .user-info-box { background: var(--bg-input); border: 1px solid var(--accent); border-radius: 8px; padding: 16px; margin-bottom: 18px; }
+        .user-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; }
+        .user-info-item { display: flex; gap: 8px; font-size: 14px; }
+        .user-info-item .label { color: var(--text-secondary); font-weight: 600; }
+        .user-info-item .value { color: var(--text-primary); }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">&#127919; AI Grievance System</a>
+        <div class="nav-links">
+            <a href="/" onclick="event.preventDefault(); window.location.href='/';">Submit Grievance</a>
+            <a href="/dashboard" class="active">Department Dashboard</a>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">&#127769; Dark</button>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="page-header">
+            <h1>Department Dashboard</h1>
+            <p>Real-time view of all submitted grievances across departments</p>
+        </div>
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card total">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">Total Grievances</div>
+            </div>
+        </div>
+        <div class="filters">
+            <label>Filter by Department:</label>
+            <select id="deptFilter" onchange="loadDashboard()">
+                <option value="All">All Departments</option>
+                <option value="Electric">Electric</option>
+                <option value="Water">Water</option>
+                <option value="Gas">Gas</option>
+                <option value="Roads">Roads</option>
+                <option value="Sanitation">Sanitation</option>
+                <option value="Healthcare">Healthcare</option>
+                <option value="General">General</option>
+            </select>
+            <button class="refresh-btn" onclick="loadDashboard()">Refresh</button>
+        </div>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Grievance ID</th>
+                        <th>User</th>
+                        <th>Department</th>
+                        <th>Priority</th>
+                        <th>Summary</th>
+                        <th>Sent To</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="grievanceTable">
+                    <tr><td colspan="9" class="empty-state">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal-overlay" id="viewModal" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Grievance Details</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="empty-state">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function initTheme() {
+            const saved = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            updateBtn(saved);
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateBtn(next);
+        }
+
+        function updateBtn(theme) {
+            document.getElementById('themeBtn').textContent = theme === 'light' ? 'Dark' : 'Light';
+        }
+        initTheme();
+
+        function formatDate(isoString) {
+            if (!isoString) return '-';
+            const d = new Date(isoString);
+            return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getBadgeClass(type, value) {
+            const map = {
+                dept: { 'Electric': 'badge-electric', 'Water': 'badge-water', 'Gas': 'badge-gas', 'Roads': 'badge-roads', 'Sanitation': 'badge-sanitation', 'Healthcare': 'badge-healthcare', 'General': 'badge-general' },
+                priority: { 'Critical': 'badge-critical', 'High': 'badge-high', 'Medium': 'badge-medium', 'Low': 'badge-low' },
+                status: { 'submitted': 'badge-submitted', 'routed': 'badge-routed' }
+            };
+            return map[type][value] || 'badge-general';
+        }
+
+        async function loadDashboard() {
+            const dept = document.getElementById('deptFilter').value;
+            const tableBody = document.getElementById('grievanceTable');
+            const statsGrid = document.getElementById('statsGrid');
+            tableBody.innerHTML = '<tr><td colspan="9" class="empty-state">Loading grievances...</td></tr>';
+            try {
+                const url = dept === 'All' ? '/api/dashboard' : '/api/dashboard?department=' + encodeURIComponent(dept);
+                const res = await fetch(url);
+                const data = await res.json();
+                let statsHtml = '<div class="stat-card total"><div class="stat-number">' + (data.total || 0) + '</div><div class="stat-label">Total Grievances</div></div>';
+                const deptOrder = ['Electric', 'Water', 'Gas', 'Roads', 'Sanitation', 'Healthcare', 'General'];
+                deptOrder.forEach(d => {
+                    if (data.stats && data.stats[d]) {
+                        statsHtml += '<div class="stat-card"><div class="stat-number">' + data.stats[d] + '</div><div class="stat-label">' + d + '</div></div>';
+                    }
+                });
+                statsGrid.innerHTML = statsHtml;
+                if (!data.grievances || data.grievances.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="9" class="empty-state"><div style="font-size: 48px; margin-bottom: 12px;">&#128236;</div><div>No grievances found for this department.</div></td></tr>';
+                    return;
+                }
+                tableBody.innerHTML = data.grievances.map(g => `
+                    <tr>
+                        <td><strong>${g.id}</strong></td>
+                        <td class="user-cell" title="${g.user_name || 'Unknown'}">${g.user_name || 'Unknown'}</td>
+                        <td><span class="badge ${getBadgeClass('dept', g.department)}">${g.department}</span></td>
+                        <td><span class="badge ${getBadgeClass('priority', g.priority)}">${g.priority}</span></td>
+                        <td class="summary-cell" title="${g.summary}">${g.summary}</td>
+                        <td class="email-cell" title="${g.email_to || '-'}">${g.email_to || '-'}</td>
+                        <td style="color: var(--text-secondary); font-size: 12px;">${formatDate(g.created_at)}</td>
+                        <td><span class="badge ${getBadgeClass('status', g.status)}">${g.status}</span></td>
+                        <td>
+                            <button class="view-btn" onclick="openModal('${g.id}')"> View</button>
+                            ${g.email_subject ? '<a href="/api/download-email/' + g.id + '" class="download-btn" target="_blank"> Email</a>' : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                tableBody.innerHTML = '<tr><td colspan="9" class="empty-state" style="color: #ef4444;">Error loading data: ' + err.message + '</td></tr>';
+            }
+        }
+
+        async function openModal(id) {
+            const modal = document.getElementById('viewModal');
+            const body = document.getElementById('modalBody');
+            modal.classList.add('active');
+            body.innerHTML = '<div class="empty-state">Loading details...</div>';
+            try {
+                const res = await fetch('/api/grievance/' + id);
+                if (!res.ok) throw new Error('Not found');
+                const g = await res.json();
+
+                let filePreviewHtml = '<div class="no-file">No file uploaded</div>';
+                if (g.file_path && g.file_url) {
+                    const fname = g.file_path.split('/').pop();
+                    const fnameLower = fname.toLowerCase();
+                    const isImage = ['.png','.jpg','.jpeg','.gif','.webp','.bmp'].some(ext => fnameLower.endsWith(ext));
+                    const isPdf = fnameLower.endsWith('.pdf');
+                    const isText = fnameLower.endsWith('.txt');
+                    let innerContent = '';
+                    if (isImage) {
+                        innerContent = '<img src="' + g.file_url + '" alt="Uploaded file">';
+                    } else if (isPdf) {
+                        innerContent = '<iframe src="' + g.file_url + '"></iframe>';
+                    } else if (isText) {
+                        try {
+                            const txtRes = await fetch(g.file_url);
+                            const txtContent = await txtRes.text();
+                            innerContent = '<pre>' + escapeHtml(txtContent) + '</pre>';
+                        } catch {
+                            innerContent = '<pre>[Could not load text content]</pre>';
+                        }
+                    } else {
+                        innerContent = '<iframe src="' + g.file_url + '"></iframe>';
+                    }
+                    filePreviewHtml = `
+                        <div class="file-preview-box">
+                            <div class="file-meta">
+                                <span>${fname}</span>
+                                <a href="${g.file_url}" target="_blank" class="download-link" download>&#11015; Download</a>
+                            </div>
+                            ${innerContent}
+                        </div>
+                    `;
+                }
+                let userInfoHtml = '';
+                if (g.user_name) {
+                    userInfoHtml = `
+                        <div class="detail-row">
+                            <div class="detail-label">User Information</div>
+                            <div class="user-info-box">
+                                <div class="user-info-grid">
+                                    <div class="user-info-item"><span class="label">Name:</span> <span class="value">${escapeHtml(g.user_name)}</span></div>
+                                    <div class="user-info-item"><span class="label">Phone:</span> <span class="value">${escapeHtml(g.phone || '-')}</span></div>
+                                    <div class="user-info-item"><span class="label">Address:</span> <span class="value">${escapeHtml(g.address || '-')}</span></div>
+                                    <div class="user-info-item"><span class="label">Pincode:</span> <span class="value">${escapeHtml(g.pincode || '-')}</span></div>
+                                    <div class="user-info-item"><span class="label">Govt ID:</span> <span class="value">${escapeHtml(g.govt_id_type || '-')} - ${escapeHtml(g.govt_id_number || '-')}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                let emailPreviewHtml = '';
+                if (g.email_subject) {
+                    emailPreviewHtml = `
+                        <div class="detail-row">
+                            <div class="detail-label">Email Subject</div>
+                            <div class="detail-value">${escapeHtml(g.email_subject)}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Email Body</div>
+                            <div class="email-preview-box">${escapeHtml(g.email_body || '-')}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Sent To</div>
+                            <div class="detail-value">${g.email_to || '-'} <a href="/api/download-email/${g.id}" target="_blank" class="download-link" style="margin-left: 12px;"> Download Email</a></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Sent At</div>
+                            <div class="detail-value">${formatDate(g.email_sent_at)}</div>
+                        </div>
+                    `;
+                }
+                body.innerHTML = `
+                    <div class="detail-row">
+                        <div class="detail-label">Grievance ID</div>
+                        <div class="detail-value">${g.id}</div>
+                    </div>
+                    ${userInfoHtml}
+                    <div class="detail-row">
+                        <div class="detail-label">Department</div>
+                        <div class="detail-value"><span class="badge ${getBadgeClass('dept', g.department)}">${g.department}</span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Priority</div>
+                        <div class="detail-value"><span class="badge ${getBadgeClass('priority', g.priority)}">${g.priority}</span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value"><span class="badge ${getBadgeClass('status', g.status)}">${g.status}</span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Complaint Text</div>
+                        <div class="detail-value">${escapeHtml(g.complaint_text || '-')}</div>
+                    </div>
+                    ${g.voice_transcript ? `
+                    <div class="detail-row">
+                        <div class="detail-label">Voice Transcript</div>
+                        <div class="detail-value">${escapeHtml(g.voice_transcript)}</div>
+                    </div>
+                    ` : ''}
+                    <div class="detail-row">
+                        <div class="detail-label">AI Summary</div>
+                        <div class="detail-value">${g.summary || '-'}</div>
+                    </div>
+                    ${emailPreviewHtml}
+                    <div class="detail-row">
+                        <div class="detail-label">Uploaded File</div>
+                        ${filePreviewHtml}
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Submitted On</div>
+                        <div class="detail-value">${formatDate(g.created_at)}</div>
+                    </div>
+                `;
+            } catch (err) {
+                body.innerHTML = '<div class="empty-state" style="color: #ef4444;">Failed to load: ' + err.message + '</div>';
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function closeModal(e) {
+            if (!e || e.target.id === 'viewModal') {
+                document.getElementById('viewModal').classList.remove('active');
+            }
+        }
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+        loadDashboard();
+    </script>
+</body>
+</html>

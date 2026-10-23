@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.db
+.continue
+test api and key/
+working codes grievance system/
+uploads/
+emails/
+.vscode/
+.env
